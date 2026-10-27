@@ -4,4 +4,4 @@ pages_build_output_dir = "public"
 
 [[kv_namespaces]]
 binding = "POSTS"
-id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+id = "ceef1c8c4c2044849187408362f6604e"
