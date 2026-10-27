@@ -220,9 +220,26 @@
       const listBox = h('div', { class: 'panel' });
       async function list() {
         try { posts = await (await fetch('/api/posts')).json(); } catch { }
-        listBox.replaceChildren(h('h3', { style: 'margin-bottom:8px' }, 'Live posts (' + posts.length + ')'),
-          posts.length ? posts.map(p => h('div', { class: 'item' }, h('div', null, h('strong', null, p.title || p.host || 'Untitled'), h('small', null, { comp: 'Poster', short: 'Short', pdf: 'PDF', link: 'Link' }[p.type] + ' · ' + Math.max(0, Math.ceil((p.expiresAt - Date.now()) / DAY)) + ' days left')),
-            h('button', { class: 'btn x', onclick: async () => { if (!confirm('Delete this post?')) return; try { await api('/api/posts/' + p.id, { method: 'DELETE' }); toast('Deleted'); list(); } catch (e) { toast(e.message); } } }, 'Delete'))) : h('small', null, 'Nothing posted yet.'));
+        const label = { comp: 'Poster', short: 'Short', pdf: 'PDF', link: 'Link' };
+        listBox.replaceChildren(
+          h('h3', { style: 'margin-bottom:8px' }, 'Live posts (' + posts.length + ')'),
+          ...(posts.length
+            ? posts.map(p => h('div', { class: 'item' },
+              h('div', null,
+                h('strong', null, p.title || p.host || 'Untitled'),
+                h('small', null, label[p.type] + ' · ' + Math.max(0, Math.ceil((p.expiresAt - Date.now()) / DAY)) + ' days left')
+              ),
+              h('button', {
+                class: 'btn x',
+                onclick: async () => {
+                  if (!confirm('Delete this post?')) return;
+                  try { await api('/api/posts/' + p.id, { method: 'DELETE' }); toast('Deleted'); list(); }
+                  catch (e) { toast(e.message); }
+                }
+              }, 'Delete')
+            ))
+            : [h('small', null, 'Nothing posted yet.')])
+        );
       }
       $('#app').replaceChildren(h('div', { class: 'top' }, h('h1', null, 'Add a post'), h('div', null, h('a', { href: '/', class: 'btn' }, 'View site'), ' ', h('button', { class: 'btn', onclick: logout }, 'Sign out'))),
         h('div', { class: 'panel' }, inp, drop, pick, det, title, desc, err, go), listBox);
