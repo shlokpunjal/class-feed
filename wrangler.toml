@@ -1,0 +1,7 @@
+name = "class-feed"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "public"
+
+[[kv_namespaces]]
+binding = "POSTS"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"

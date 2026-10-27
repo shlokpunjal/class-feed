@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Admin · Sir's Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.shell{max-width:620px;margin:0 auto;padding:40px 18px 80px}
+.shell h1{font-size:clamp(32px,7vw,48px);font-weight:800;margin-bottom:22px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-bottom:22px}
+input[type=text],input[type=password]{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;margin-bottom:10px}
+input:focus{border-color:var(--blue);outline:0}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;color:var(--mute);transition:.2s;margin-bottom:10px}
+.drop.over{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 8%,transparent);transform:scale(1.01)}
+.drop b{color:var(--ink)}
+.det{min-height:34px;display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:10px}
+.tagp{background:var(--blue);color:var(--blueink);border-radius:99px;padding:3px 12px;font-size:13px;animation:pop .35s}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.err{color:var(--coral);font-weight:600;min-height:22px;margin:0 0 8px}
+.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.item div{flex:1;min-width:0}.item strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item small{color:var(--mute)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top a,.top button{font-size:14px}
+button[disabled]{opacity:.5;cursor:default}
+</style></head>
+<body><div class="shell" id="app"></div><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),DAY=864e5,YT=/(youtube\.com\/(shorts\/|watch\?v=|embed\/)|youtu\.be\/)[\w-]{6,}/i;
+let token=localStorage.getItem('adm'),file=null,posts=[];
+function h(t,p,...k){const e=document.createElement(t);for(const a in p||{}){if(a==='class')e.className=p[a];else if(a.startsWith('on'))e.addEventListener(a.slice(2),p[a]);else if(p[a]!=null&&p[a]!==false)e.setAttribute(a,p[a]===true?'':p[a]);}
+  k.flat().forEach(c=>c!=null&&c!==false&&e.append(c.nodeType?c:document.createTextNode(c)));return e;}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2200);}
+async function api(path,opt={}){const r=await fetch(path,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+token}});
+  const d=await r.json().catch(()=>({}));if(r.status===401&&token&&path!=='/api/login'){logout();}if(!r.ok)throw new Error(d.error||'Something went wrong');return d;}
+function logout(){token=null;localStorage.removeItem('adm');login();}
+
+function login(){
+  const u=h('input',{type:'text',placeholder:'Username',autocomplete:'username'}),p=h('input',{type:'password',placeholder:'Password',autocomplete:'current-password'}),err=h('p',{class:'err'}),b=h('button',{class:'btn p',style:'width:100%'},'Sign in');
+  const go=async()=>{b.disabled=true;err.textContent='';
+    try{const r=await fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({user:u.value,pass:p.value})});const d=await r.json();
+      if(!r.ok)throw new Error(d.error);token=d.token;localStorage.setItem('adm',token);panel();}
+    catch(e){err.textContent=e.message;b.disabled=false;}};
+  b.onclick=go;p.onkeydown=e=>e.key==='Enter'&&go();
+  $('#app').replaceChildren(h('h1',null,'Sir, welcome back'),h('div',{class:'panel'},u,p,err,b));
+}
+
+async function panel(){
+  const inp=h('input',{type:'text',placeholder:'Paste a YouTube Short or website link',inputmode:'url'}),
+    title=h('input',{type:'text',placeholder:'Heading (optional)'}),desc=h('input',{type:'text',placeholder:'Short description (optional)'}),
+    pick=h('input',{type:'file',accept:'image/*,application/pdf',hidden:true}),det=h('div',{class:'det'}),err=h('p',{class:'err'}),
+    go=h('button',{class:'btn p',disabled:true},'Post'),drop=h('div',{class:'drop'},'Drag a poster or PDF here, or ',h('b',null,'tap to choose'),h('div',null,'Images and PDFs up to 5 MB'));
+  let kind=null,url=null;
+  const detect=()=>{
+    if(file){kind=file.type==='application/pdf'?'pdf':file.type.startsWith('image/')?'comp':null;}
+    else{let v=inp.value.trim();kind=null;url=null;
+      if(v){if(!/^https?:\/\//i.test(v)&&/^[\w.-]+\.[a-z]{2,}/i.test(v))v='https://'+v;try{url=new URL(v).href;kind=YT.test(url)?'short':'link';}catch{}}}
+    det.replaceChildren(kind?h('span',{class:'tagp'},{comp:'Competition poster',pdf:'PDF',short:'YouTube Short',link:'Website link'}[kind]):'',file?h('span',null,file.name):'');
+    desc.style.display=kind==='link'?'':'none';go.disabled=!kind;};
+  const setFile=f=>{if(!f)return;if(f.size>5*1048576){toast('File is over 5 MB');return;}file=f;inp.value='';detect();};
+  inp.oninput=()=>{file=null;detect();};
+  drop.onclick=()=>pick.click();pick.onchange=()=>setFile(pick.files[0]);
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('over');};drop.ondragleave=()=>drop.classList.remove('over');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');setFile(e.dataTransfer.files[0]);};
+  go.onclick=async()=>{go.disabled=true;go.textContent='Posting…';err.textContent='';
+    try{
+      if(file){const f=new FormData();f.append('file',file);f.append('title',title.value);await api('/api/posts',{method:'POST',body:f});}
+      else await api('/api/posts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url,title:title.value,desc:desc.value})});
+      file=null;inp.value=title.value=desc.value='';detect();toast('Posted');await list();
+    }catch(e){err.textContent=e.message;}
+    go.textContent='Post';go.disabled=!kind;};
+  const listBox=h('div',{class:'panel'});
+  async function list(){try{posts=await (await fetch('/api/posts')).json();}catch{}
+    listBox.replaceChildren(h('h3',{style:'margin-bottom:8px'},'Live posts ('+posts.length+')'),
+      posts.length?posts.map(p=>h('div',{class:'item'},h('div',null,h('strong',null,p.title||p.host||'Untitled'),h('small',null,{comp:'Poster',short:'Short',pdf:'PDF',link:'Link'}[p.type]+' · '+Math.max(0,Math.ceil((p.expiresAt-Date.now())/DAY))+' days left')),
+        h('button',{class:'btn x',onclick:async()=>{if(!confirm('Delete this post?'))return;try{await api('/api/posts/'+p.id,{method:'DELETE'});toast('Deleted');list();}catch(e){toast(e.message);}}},'Delete'))):h('small',null,'Nothing posted yet.'));}
+  $('#app').replaceChildren(h('div',{class:'top'},h('h1',null,'Add a post'),h('div',null,h('a',{href:'/',class:'btn'},'View site'),' ',h('button',{class:'btn',onclick:logout},'Sign out'))),
+    h('div',{class:'panel'},inp,drop,pick,det,title,desc,err,go),listBox);
+  detect();list();
+}
+token?panel():login();
+</script></body></html>
