@@ -7,8 +7,9 @@
 <link rel="stylesheet" href="style.css">
 <style>
 .hero{padding:56px 0 26px}
-.hero h1{font-size:clamp(40px,8vw,84px);font-weight:800;white-space:nowrap}
-.hero p{color:var(--mute);max-width:46ch;font-size:18px;margin:16px 0 0;white-space:nowrap}
+.hero h1{font-size:clamp(22px,7.5vw,84px);font-weight:800;white-space:nowrap}
+.hero p{color:var(--mute);max-width:46ch;font-size:18px;margin:16px 0 0}
+@media(min-width:1200px){.hero p{white-space:nowrap;max-width:none}}
 .bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);padding:12px 0;border-bottom:1px solid var(--line)}
 .bar .wrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .tabs{position:relative;display:flex;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px;overflow-x:auto;scrollbar-width:none;max-width:100%}
